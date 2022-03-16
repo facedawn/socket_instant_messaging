@@ -12,6 +12,8 @@ unordered_map<int,int>heartbeat_cnt;
 
 char buff[BUFFSIZE];
 char heartbeat_buff[BUFFSIZE];
+int close_list[BUFFSIZE];
+int close_pos=0;
 int maxfd=-1;
 
 
@@ -120,6 +122,28 @@ int update_maxfd()
     return maxfd;
 }
 
+void asynchronous_shutdown(int &fd)//用于异步关闭连接
+{
+    sleep(MAX_RECONNECT_TIME);
+    if(heartbeat_cnt[fd]<=0)
+    {
+        printf("close %d\n",fd);
+        close(fd);
+    }
+    else
+    {
+        printf("reconnect success. fd:%d\n",fd);
+        FD_SET(fd,&readfds_back);
+        client_socketfd_list[now_list_num].push_back(fd);
+    }
+    return ;
+}
+
+void reply_heartbeat()//收到heartbeat之后回复，让客户端知道服务端状态
+{
+
+}
+
 void heartbeat_dec_thread()
 {            
     while(true){
@@ -131,6 +155,11 @@ void heartbeat_dec_thread()
                 printf("%d off\n",x);
                 client_socketfd_list[now_list_num].erase(i--);
                 FD_CLR(x,&readfds_back);
+                // Mutex::Autolock _l(close_pos);
+                close_list[close_pos++]=x;
+                close_pos%=BUFFSIZE;
+                std::thread shutdown(&asynchronous_shutdown,std::ref(close_list[close_pos-1]));
+                shutdown.detach();
                 //close(x);
             }
         }
@@ -196,7 +225,7 @@ int main()
                 FD_SET(client_socketfd,&errorfds_back);
                 client_socketfd_list[now_list_num].push_back(client_socketfd);
 
-                heartbeat_cnt[client_socketfd]=5;
+                heartbeat_cnt[client_socketfd]=MAX_LOSE_HEARTBEAT_TIME;
 
                 maxfd=update_maxfd();
             }
@@ -208,7 +237,7 @@ int main()
                 //set_message_header(buff,message);
                 if(strlen(buff)>3&&stype==message)
                 {
-                    printf("recv: %s from %d\n",buff+PREFIX,i);
+                    printf("recv: %s from %d\n",(buff+PREFIX),i);
                     sendtoall(buff,writefds_back,i);
                 }
                 else if(stype==heartbeat)
@@ -217,7 +246,7 @@ int main()
                     //map计数，每秒-1，每次收到心跳重置为5
                     int next_list_num=1-now_list_num;
                     //printf("recv heartbeat from %d\n",i);
-                    heartbeat_cnt[i]=5;
+                    heartbeat_cnt[i]=MAX_LOSE_HEARTBEAT_TIME;
                 }
                 bzero(buff,BUFFSIZE);
             }

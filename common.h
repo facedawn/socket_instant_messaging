@@ -12,6 +12,8 @@
 #include <thread>
 
 #define PREFIX 3
+#define MAX_LOSE_HEARTBEAT_TIME 5
+#define MAX_RECONNECT_TIME 5
 
 enum send_type{
     message=0,
