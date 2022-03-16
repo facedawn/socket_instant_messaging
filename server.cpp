@@ -1,12 +1,24 @@
 #include "server.h"
 #include <list>
+#include <map>
+#include <unordered_map>
 using namespace std;
 int client_socketfd;
 int socketfd;
-list<int>client_socketfd_list;
+list<int>client_socketfd_list[2];
+int now_list_num=0;
+
+unordered_map<int,int>heartbeat_cnt;
+
 char buff[BUFFSIZE];
-char pix[BUFFSIZE];
+char heartbeat_buff[BUFFSIZE];
 int maxfd=-1;
+
+
+fd_set readfds_back;
+fd_set writefds_back;
+fd_set errorfds_back;
+fd_set readfds,writefds,errorfds;
 
 int socket_create()
 {
@@ -60,22 +72,12 @@ int socket_accept(int socketfd)
 
 void stopServerRunning(int p)
 {
-    for(auto client_socketfd:client_socketfd_list)
+    for(auto client_socketfd:client_socketfd_list[now_list_num])
     {
         close(client_socketfd);
     }
     printf("Close Server\n");
     exit(0);
-}
-
-void append(char *buff,const char *str)
-{
-    int initlen=strlen(buff);
-    int sumlen=initlen+strlen(str);
-    for(int i=initlen;i<sumlen;i++)
-    {
-        buff[i]=str[i-initlen];
-    }
 }
 
 char tostring_ans[10];
@@ -94,7 +96,7 @@ char *tostring(int a)
 
 void sendtoall(char *buff,fd_set &writefds,int srcfds)
 {
-    for(auto client_socketfd:client_socketfd_list)
+    for(auto client_socketfd:client_socketfd_list[now_list_num])
     {
         if (client_socketfd==socketfd||client_socketfd==srcfds)continue;
         
@@ -111,15 +113,38 @@ void sendtoall(char *buff,fd_set &writefds,int srcfds)
 int update_maxfd()
 {
     int maxfd=0;
-    for(auto client_socketfd:client_socketfd_list)
+    for(auto client_socketfd:client_socketfd_list[now_list_num])
     {
         maxfd=max(maxfd,client_socketfd);
     }
     return maxfd;
 }
 
+void heartbeat_dec_thread()
+{            
+    while(true){
+        for(auto i=client_socketfd_list[now_list_num].begin();i!=client_socketfd_list[now_list_num].end();i++)
+        {
+            int x=(*i);
+            if(x!=socketfd && --heartbeat_cnt[x]<=0)
+            {
+                printf("%d off\n",x);
+                client_socketfd_list[now_list_num].erase(i--);
+                FD_CLR(x,&readfds_back);
+                //close(x);
+            }
+        }
+        sleep(1);
+    }
+}
+
+
+
 int main()
 {
+    std::thread heartbeat_dec(&heartbeat_dec_thread);
+    heartbeat_dec.detach();
+
     socketfd=socket_create();
     if(socketfd==-1)return -1;
 
@@ -131,10 +156,6 @@ int main()
     if(socket_listen(socketfd)==-1)return -1;
     printf("Listening...\n");
 
-    fd_set readfds_back;
-    fd_set writefds_back;
-    fd_set errorfds_back;
-    fd_set readfds,writefds,errorfds;
     FD_ZERO(&readfds_back);
     FD_ZERO(&writefds_back);
     FD_ZERO(&errorfds_back);
@@ -153,16 +174,16 @@ int main()
         readfds=readfds_back;
         writefds=writefds_back;
         errorfds=errorfds_back;
-        timeout.tv_sec=1;
+        timeout.tv_sec=2;
         timeout.tv_usec=0;
-        client_socketfd_list.push_back(socketfd);
+        client_socketfd_list[now_list_num].push_back(socketfd);
         maxfd=update_maxfd();
         //printf("maxfd:%d\n",maxfd);
         int res=0;
         res=select(maxfd+1,&readfds,NULL,NULL,&timeout);
         //printf("select  res:%d\n",res);
         if(res==-1){printf("select error\n");return -1;}
-        for(int i=0;i<=maxfd;i++)
+        for(int i=0;i<=1023;i++)
         {
             if(!FD_ISSET(i,&readfds))continue;
             if(i==socketfd)
@@ -173,19 +194,34 @@ int main()
                 FD_SET(client_socketfd,&readfds_back);
                 FD_SET(client_socketfd,&writefds_back);
                 FD_SET(client_socketfd,&errorfds_back);
-                client_socketfd_list.push_back(client_socketfd);
+                client_socketfd_list[now_list_num].push_back(client_socketfd);
+
+                heartbeat_cnt[client_socketfd]=5;
+
                 maxfd=update_maxfd();
             }
             else
             {
                 bzero(buff,BUFFSIZE);
                 recv(i,buff,BUFFSIZE-1,0);
-                if(strlen(buff)!=0)
-                    printf("recv: %s from %d\n",buff,i);
-                sendtoall(buff,writefds_back,i);
+                int stype=get_message_header(buff);
+                //set_message_header(buff,message);
+                if(strlen(buff)>3&&stype==message)
+                {
+                    printf("recv: %s from %d\n",buff+PREFIX,i);
+                    sendtoall(buff,writefds_back,i);
+                }
+                else if(stype==heartbeat)
+                {
+                    //收到心跳，维持连接
+                    //map计数，每秒-1，每次收到心跳重置为5
+                    int next_list_num=1-now_list_num;
+                    //printf("recv heartbeat from %d\n",i);
+                    heartbeat_cnt[i]=5;
+                }
                 bzero(buff,BUFFSIZE);
             }
         }
-        //send(client_socketfd,buff,strlen(buff),0);
+        // now_list_num=1-now_list_num;
     }
 }

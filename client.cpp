@@ -3,6 +3,7 @@
 int client_socketfd;
 char buff[BUFFSIZE];
 char sendbuff[BUFFSIZE];
+char heartbeatbuff[BUFFSIZE];
 int socket_create()
 {
     int socketfd=socket(AF_INET,SOCK_STREAM,0);
@@ -48,10 +49,20 @@ void stopServerRunning(int p)
 void input_message()
 {
     while(true){
-        scanf("%s",sendbuff);
+        scanf("%s",sendbuff+PREFIX);
+        set_message_header(sendbuff,message);
         if(strlen(sendbuff)!=0)
             send(client_socketfd,sendbuff,strlen(sendbuff),0);
         bzero(sendbuff, BUFFSIZE);
+    }
+}
+
+void send_heartbeat()
+{
+    set_message_header(heartbeatbuff,heartbeat);
+    while(true){
+        send(client_socketfd,heartbeatbuff,strlen(heartbeatbuff),0);
+        sleep(1);
     }
 }
 
@@ -59,6 +70,9 @@ int main()
 {
     std::thread input(&input_message);
     input.detach();
+    std::thread heartbeat_thread(&send_heartbeat);
+    heartbeat_thread.detach();
+    
     while(true)
     {
         signal(SIGINT, stopServerRunning);    // 这句用于在输入Ctrl+C的时候关闭服务器
@@ -77,8 +91,18 @@ int main()
             //bzero(buff, BUFFSIZE);
             
             recv(client_socketfd,buff,BUFFSIZE-1,0);
-            if(strlen(buff)!=0)
-                printf("Recv: %s\n",buff);    
+            if(strlen(buff)>=3)
+            {
+                send_type stype=get_message_header(buff);
+                if(stype==message)
+                    printf("Recv: %s\n",buff+PREFIX);
+                else if(stype==heartbeat)
+                {
+                    printf("send heartbeat\n");
+                    set_message_header(buff,heartbeat);
+                    send(client_socketfd,buff,strlen(buff),0);
+                }
+            }    
             bzero(buff, BUFFSIZE);
         }
         close(client_socketfd);
