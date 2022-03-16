@@ -66,6 +66,27 @@ void send_heartbeat()
     }
 }
 
+int heartbeat_left_time;
+void heartbeat_left_time_dec_ps()
+{
+    while(true)
+    {
+        if(heartbeat_left_time<=-MAX_RECONNECT_TIME)
+        {
+            printf("reconnect fail\n");
+        }
+        else if(heartbeat_left_time<=0)
+        {
+            printf("lose connection\n");
+        }
+        else
+        {
+            --heartbeat_left_time;
+        }
+    }
+}
+
+
 int main()
 {
     std::thread input(&input_message);
@@ -73,6 +94,9 @@ int main()
     std::thread heartbeat_thread(&send_heartbeat);
     heartbeat_thread.detach();
     
+    heartbeat_left_time=MAX_LOSE_HEARTBEAT_TIME;
+
+
     while(true)
     {
         signal(SIGINT, stopServerRunning);    // 这句用于在输入Ctrl+C的时候关闭服务器
@@ -98,7 +122,7 @@ int main()
                     printf("Recv: %s\n",buff+PREFIX);
                 else if(stype==heartbeat)
                 {
-                    printf("send heartbeat\n");
+                    //printf("send heartbeat\n");
                     set_message_header(buff,heartbeat);
                     send(client_socketfd,buff,strlen(buff),0);
                 }

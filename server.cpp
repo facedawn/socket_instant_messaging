@@ -128,6 +128,7 @@ void asynchronous_shutdown(int &fd)//用于异步关闭连接
     if(heartbeat_cnt[fd]<=0)
     {
         printf("close %d\n",fd);
+        FD_CLR(fd,&readfds_back);
         close(fd);
     }
     else
@@ -139,9 +140,11 @@ void asynchronous_shutdown(int &fd)//用于异步关闭连接
     return ;
 }
 
-void reply_heartbeat()//收到heartbeat之后回复，让客户端知道服务端状态
+void reply_heartbeat(int fd)//收到heartbeat之后回复，让客户端知道服务端状态
 {
-
+    bzero(buff,BUFFSIZE);
+    set_message_header(buff,heartbeat);
+    send(fd,buff,strlen(buff),0);
 }
 
 void heartbeat_dec_thread()
@@ -154,7 +157,7 @@ void heartbeat_dec_thread()
             {
                 printf("%d off\n",x);
                 client_socketfd_list[now_list_num].erase(i--);
-                FD_CLR(x,&readfds_back);
+                // FD_CLR(x,&readfds_back);
                 // Mutex::Autolock _l(close_pos);
                 close_list[close_pos++]=x;
                 close_pos%=BUFFSIZE;
@@ -245,6 +248,7 @@ int main()
                     //收到心跳，维持连接
                     //map计数，每秒-1，每次收到心跳重置为5
                     int next_list_num=1-now_list_num;
+                    //reply_heartbeat(i);
                     //printf("recv heartbeat from %d\n",i);
                     heartbeat_cnt[i]=MAX_LOSE_HEARTBEAT_TIME;
                 }
