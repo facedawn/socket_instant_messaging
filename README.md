@@ -60,3 +60,13 @@ input线程读取本地输入并发出信息。
 
 heartbeat_thread线程用来发送心跳信号。
 
+![image-20220316191913058](https://user-images.githubusercontent.com/59024137/158579519-54113aba-3dae-4e41-a031-df5f3ef6831c.png)
+
+server运行截图
+![image-20220316192145392](https://user-images.githubusercontent.com/59024137/158579826-46a70a65-f1c2-4a5b-b03f-20b49fdfa346.png)
+
+client1运行截图
+![image-20220316192153103](https://user-images.githubusercontent.com/59024137/158579914-72ec3cd1-ddbd-43dd-8b02-77d7c033af32.png)
+
+client2运行截图
+![image-20220316192200106](https://user-images.githubusercontent.com/59024137/158579966-6a73eaf0-cb36-49cb-867c-cb534aad6c92.png)
