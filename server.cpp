@@ -1,4 +1,5 @@
 #include "server.h"
+#include "client_status.h"
 #include <list>
 #include <map>
 #include <unordered_map>
@@ -9,6 +10,8 @@ list<int>client_socketfd_list[2];
 int now_list_num=0;
 
 unordered_map<int,int>heartbeat_cnt;
+unordered_map<int,client_status*>client_status_map;
+channel *root_channel;
 
 char buff[BUFFSIZE];
 char heartbeat_buff[BUFFSIZE];
@@ -62,9 +65,6 @@ int socket_accept(int socketfd)
     bzero(&client_addr,sizeof(client_addr));
     socklen_t len=sizeof(client_addr);
     int accept_status=accept(socketfd,NULL,NULL);
-
-    
-    
     // if(accept_status==-1)
     // {
         //printf("accept error(%d):%s",errno,strerror(errno));
@@ -140,16 +140,13 @@ void asynchronous_shutdown(int &fd)//用于异步关闭连接
     return ;
 }
 
-void reply_heartbeat(int fd)//收到heartbeat之后回复，让客户端知道服务端状态
-{
-    bzero(buff,BUFFSIZE);
-    set_message_header(buff,heartbeat);
-    send(fd,buff,strlen(buff),0);
-}
 
 void heartbeat_dec_thread()
 {            
+    bzero(heartbeat_buff,BUFFSIZE);
+    set_message_header(heartbeat_buff,heartbeat);
     while(true){
+        
         for(auto i=client_socketfd_list[now_list_num].begin();i!=client_socketfd_list[now_list_num].end();i++)
         {
             int x=(*i);
@@ -157,13 +154,15 @@ void heartbeat_dec_thread()
             {
                 printf("%d off\n",x);
                 client_socketfd_list[now_list_num].erase(i--);
-                // FD_CLR(x,&readfds_back);
-                // Mutex::Autolock _l(close_pos);
                 close_list[close_pos++]=x;
                 close_pos%=BUFFSIZE;
+                client_status_map.erase(x);
                 std::thread shutdown(&asynchronous_shutdown,std::ref(close_list[close_pos-1]));
                 shutdown.detach();
-                //close(x);
+            }
+            else if(x!=socketfd&&heartbeat_cnt[x]>0)
+            {
+                send(x,heartbeat_buff,strlen(heartbeat_buff),MSG_NOSIGNAL);//向客户端发送heartbeat，同时传送状态
             }
         }
         sleep(1);
@@ -179,6 +178,9 @@ int main()
 
     socketfd=socket_create();
     if(socketfd==-1)return -1;
+
+    std::string root_channel_name="root";
+    root_channel=new channel(root_channel_name);
 
     int flags=fcntl(socketfd,F_GETFL,0);
     fcntl(socketfd,F_SETFL,flags|O_NONBLOCK);
@@ -223,6 +225,10 @@ int main()
                 client_socketfd=socket_accept(i);
                 if(client_socketfd==-1){continue;}
                 printf("accept success newfds:%d\n",client_socketfd);
+
+                client_status *new_client_status=new client_status(client_socketfd,root_channel);
+                client_status_map.insert({client_socketfd,new_client_status});
+
                 FD_SET(client_socketfd,&readfds_back);
                 FD_SET(client_socketfd,&writefds_back);
                 FD_SET(client_socketfd,&errorfds_back);
@@ -241,7 +247,8 @@ int main()
                 if(strlen(buff)>3&&stype==message)
                 {
                     printf("recv: %s from %d\n",(buff+PREFIX),i);
-                    sendtoall(buff,writefds_back,i);
+                    //sendtoall(buff,writefds_back,i);
+                    client_status_map[i]->send_message_to_all_son_channel(buff);
                 }
                 else if(stype==heartbeat)
                 {
@@ -251,6 +258,10 @@ int main()
                     //reply_heartbeat(i);
                     //printf("recv heartbeat from %d\n",i);
                     heartbeat_cnt[i]=MAX_LOSE_HEARTBEAT_TIME;
+                }
+                else if(stype==set_username)
+                {
+                    printf("user %s connect in %d\n",(buff+PREFIX),i);
                 }
                 bzero(buff,BUFFSIZE);
             }
