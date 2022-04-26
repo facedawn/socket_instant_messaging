@@ -1,11 +1,14 @@
+#pragma once
 #include "common.h"
+#include "user.h"
+#include "message_factory.h"
 class channel{
 public:
     channel* root;
     std::string now_node_val;
     std::unordered_map<std::string,channel*>son_channel;
     channel* fa;
-    std::set<int>connections;
+    std::set<user*>connections;
     int connection_cnt;
 
     channel(std::string new_channel_name)
@@ -96,35 +99,37 @@ public:
         return son_channel->enter_channel(channel_path.substr(cnt+1));
     }
 
-    void someone_enter(int fd)
+    void someone_enter(user* client_user)
     {
-        connections.insert(fd);
+        connections.insert(client_user);
         ++connection_cnt;
     }
 
-    void someone_leave(int fd)
+    void someone_leave(user* client_user)
     {
-        auto i=connections.find(fd);
+        auto i=connections.find(client_user);
         if(i!=connections.end())
         {
-            connections.erase(fd);
+            connections.erase(client_user);
         }
     }
 
-    void send_only_local_cannel(char *buff)
-    {
+    void send_only_local_cannel(char *buff,pair<int,int>index)
+    {   
+        //printf("%d emm\n",connections.size());
         for(auto i:connections)
         {
-            send(i,buff,strlen(buff),MSG_NOSIGNAL);
+            i->recive(buff,index);
+            //send(i,buff,strlen(buff),MSG_NOSIGNAL);
         }
     }
 
-    void send_to_all_son_channel(char *buff)
+    void send_to_all_son_channel(char *buff,pair<int,int>index)
     {
-        send_only_local_cannel(buff);
+        send_only_local_cannel(buff,index);
         for(auto i:son_channel)
         {
-            i.second->send_to_all_son_channel(buff);
+            i.second->send_to_all_son_channel(buff,index);
         }
     }
 };

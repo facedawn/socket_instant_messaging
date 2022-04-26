@@ -1,4 +1,4 @@
-#pragma once 
+#pragma once
 #include <iostream>
 #include <cstdio>
 #include <cstring>
@@ -18,20 +18,27 @@
 #include <list>
 #include <set>
 #include <vector>
+#include <deque>
+
 using namespace std;
 
-#define PREFIX 3
+#define PREFIX 4
 #define MAX_LOSE_HEARTBEAT_TIME 5
 #define MAX_RECONNECT_TIME 5
 #define BUFFSIZE 2048
 #define HEADER_LENGTH 3
+const char split_header = '|';
+const char split_ender = '#';
 
 enum send_type
 {
     message = 0,
     heartbeat = 100,
+    message_index = 101,
+    message_back = 102,
     set_channal = 200,
-    set_username = 201
+    set_username = 201,
+
 };
 
 void append(char *buff, const char *str)
@@ -44,6 +51,11 @@ void append(char *buff, const char *str)
     }
 }
 
+void set_split_header(char *buff)
+{
+    buff[0] = split_header;
+}
+
 void set_message_header(char *buff, send_type header)
 {
     if (header == message)
@@ -54,90 +66,61 @@ void set_message_header(char *buff, send_type header)
     {
         append(buff, "100");
     }
-    else if(header == set_username)
+    else if (header == message_index)
     {
-        append(buff,"201");
+        append(buff, "101");
     }
+    else if (header == message_back)
+    {
+        append(buff, "102");
+    }
+    else if (header == set_username)
+    {
+        append(buff, "201");
+    }
+    
 }
 
 send_type get_message_header(char *buff)
 {
+    // printf("%s\n-------------\n",buff);
     int now = 0;
     for (int i = 0; i < 3; i++)
     {
         now = now * 10 + (buff[i] - '0');
     }
+    // printf("%d....\n",now);
     return (send_type)now;
 }
-/*
-class buff_class
+
+void set_end(char *buff)
 {
-public:
-    send_type header;
-    char message_buff[BUFFSIZE];
-    char tostring_ans[10];
+    buff[strlen(buff)] = split_ender;
+}
 
-    buff(){bzero(message_buff,BUFFSIZE);}
-
-    void set_message_header(send_type header)
+char *split(char *buff)
+{
+    int i = 0;
+    while (buff[i] != 0 && buff[i] != split_header)
     {
-        tostring((int)header);
-        for (int i = 0; i < HEADER_LENGTH; i++)
-        {
-            message_buff[i] = tostring_ans[i];
-        }
+        i++;
     }
-
-    void get_message_header()
+    // printf("%s......\n",buff+i+1);
+    if (buff[i] == 0)
+        return NULL;
+    else
     {
-        int now = 0;
-        for (int i = 0; i < HEADER_LENGTH; i++)
-        {
-            now = now * 10 + (message_buff[i] - '0');
-        }
-        header = (send_type)now;
+        buff[i] = 0;
+        return (buff + i + 1);
     }
+}
 
-    void set_message_info(char *info)
+int char2int(char* begin)
+{
+    int ans=0;
+    for(int i=0;*(begin+i)!=0;i++)
     {
-        int i = HEADER_LENGTH;
-        while (info[i - HEADER_LENGTH] != 0)
-        {
-            message_buff[i] = info[i - HEADER_LENGTH];
-        }
+        ans=ans*10+(*(begin+i))-'0';
     }
-
-    char *get_message_info()
-    {
-        return message_buff + HEADER_LENGTH;
-    }
-
-    void clear()
-    {
-        bzero(message_buff,BUFFSIZE);
-    }
-
-    void append(const char *str)
-    {
-        int initlen = strlen(message_buff);
-        int sumlen = initlen + strlen(str);
-        for (int i = initlen; i < sumlen; i++)
-        {
-            message_buff[i] = str[i - initlen];
-        }
-    }
-
-    char *tostring(int a)
-    {
-        int cnt = 0;
-        while (a > 0)
-        {
-            tostring_ans[cnt++] = a % 10 + '0';
-            a = a / 10;
-        }
-        tostring_ans[cnt++] = 0;
-        // printf("%s\n",tostring_ans);
-        return tostring_ans;
-    }
-};
-*/
+    return ans;
+}

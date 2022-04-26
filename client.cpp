@@ -4,6 +4,7 @@ int client_socketfd;
 char buff[BUFFSIZE];
 char sendbuff[BUFFSIZE];
 char heartbeatbuff[BUFFSIZE];
+char back_buff[BUFFSIZE];
 int socket_create()
 {
     int socketfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -53,7 +54,9 @@ void input_message()
     while (true)
     {
         scanf("%s", sendbuff + PREFIX);
+        set_split_header(sendbuff);
         set_message_header(sendbuff, message);
+        set_end(sendbuff);
         if (strlen(sendbuff) != 0)
             send(client_socketfd, sendbuff, strlen(sendbuff), 0);
         bzero(sendbuff, BUFFSIZE);
@@ -62,10 +65,12 @@ void input_message()
 
 void send_heartbeat()
 {
+    set_split_header(heartbeatbuff);
     set_message_header(heartbeatbuff, heartbeat);
+    set_end(sendbuff);
     while (true)
     {
-        send(client_socketfd, heartbeatbuff, strlen(heartbeatbuff), 0);
+        send(client_socketfd, heartbeatbuff, strlen(heartbeatbuff), MSG_NOSIGNAL);
         sleep(1);
     }
 }
@@ -75,13 +80,18 @@ void heartbeat_left_time_dec_ps()
 {
     while (true)
     {
+        // printf("%d\n",heartbeat_left_time);
         if (heartbeat_left_time <= -MAX_RECONNECT_TIME)
         {
             printf("reconnect fail\n");
+            close(client_socketfd);
+            printf("Close Client\n");
+            exit(0);
         }
-        else if (heartbeat_left_time <= 0)
+        else if (heartbeat_left_time <= 0 && heartbeat_left_time > -5)
         {
             printf("lose connection\n");
+            --heartbeat_left_time;
         }
         else
         {
@@ -95,13 +105,11 @@ int main()
 {
     std::string username;
     printf("请输入用户名：\n");
-    cin>>username;
+    cin >> username;
     std::thread input(&input_message);
     input.detach();
 
     heartbeat_left_time = MAX_LOSE_HEARTBEAT_TIME;
-    std::thread heartbeat_dec(&heartbeat_left_time_dec_ps);
-    heartbeat_dec.detach();
 
     signal(SIGINT, stopServerRunning); // 这句用于在输入Ctrl+C的时候关闭服务器
 
@@ -114,30 +122,62 @@ int main()
         close(client_socketfd);
         return -1;
     }
-    int cnt=0;
+    int cnt = 0;
 
-    bzero(buff,BUFFSIZE);
-    set_message_header(buff,set_username);
-    for(auto i:username){buff[cnt+HEADER_LENGTH]=i;cnt++;}
-    // printf("username:%s\n",buff);
-    send(client_socketfd,buff,strlen(buff),0);
-    bzero(buff,BUFFSIZE);
+    bzero(buff, BUFFSIZE);
+    set_split_header(buff);
+    set_message_header(buff, set_username);
+    for (auto i : username)
+    {
+        buff[cnt + PREFIX] = i;
+        cnt++;
+    }
+    buff[cnt + PREFIX] = 0;
+    set_end(buff);
+    send(client_socketfd, buff, strlen(buff), 0);
+    //printf("username:%s %d\n", buff + PREFIX, strlen(buff));
+    bzero(buff, BUFFSIZE);
 
+    sleep(1); //防止username和心跳混到一起
     std::thread heartbeat_thread(&send_heartbeat);
     heartbeat_thread.detach();
+    std::thread heartbeat_dec(&heartbeat_left_time_dec_ps);
+    heartbeat_dec.detach();
 
     while (true)
     {
+        memset(buff,0,sizeof(buff));
         recv(client_socketfd, buff, BUFFSIZE - 1, 0);
-        if (strlen(buff) >= 3)
+        // printf("%s........\n",buff);
+        char* buff_ptr=buff;
+        while (buff_ptr != NULL)
         {
-            send_type stype = get_message_header(buff);
-            if (stype == message)
-                printf("Recv: %s\n", buff + PREFIX);
-            else if (stype == heartbeat)
+            char *newbuff = split(buff_ptr);
+            
+            if (strlen(buff_ptr) >= 3)
             {
-                heartbeat_left_time = MAX_LOSE_HEARTBEAT_TIME;
+                send_type stype = get_message_header(buff_ptr);
+                // printf("%s %d\n",buff_ptr,stype);
+                if (stype == message)
+                    printf("Recv: %s\n", buff_ptr + HEADER_LENGTH);
+                else if (stype == heartbeat)
+                {
+                    heartbeat_left_time = MAX_LOSE_HEARTBEAT_TIME;
+                }
+                else if(stype==send_type::message_index)
+                {
+                    memset(back_buff,0,sizeof(back_buff));
+                    back_buff[0]=split_header;
+                    set_message_header(back_buff+1,send_type::message_back);
+                    int cnt=HEADER_LENGTH;
+                    for(int i=PREFIX;buff_ptr[cnt]!=0;cnt++,i++)
+                    {
+                        back_buff[i]=buff_ptr[cnt];
+                    }
+                    send(client_socketfd,back_buff,strlen(back_buff),MSG_NOSIGNAL);
+                }
             }
+            buff_ptr = newbuff;
         }
         bzero(buff, BUFFSIZE);
     }
