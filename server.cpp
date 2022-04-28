@@ -269,14 +269,13 @@ int main()
                 recv(i, buff, BUFFSIZE - 1, 0);
 
                 char *buff_ptr = buff;
-                // printf("%s\n",buff);
+                // printf("\n\n%s...\n",buff);
                 while (buff_ptr != NULL)
                 {
                     buff_ptr[strlen(buff_ptr)]=0;
                     
-                    
                     char *newbuff = split(buff_ptr);
-
+                    // printf("newbuff: %s...\n",newbuff);
                     int stype = get_message_header(buff_ptr);
                     // set_message_header(buff,message);
                     if (strlen(buff_ptr) > 3 && stype == message)
@@ -347,10 +346,10 @@ int main()
                         buff_ptr[dot_index + HEADER_LENGTH] = 0;
                         int f = char2int(buff_ptr + HEADER_LENGTH + 1), s = char2int(buff_ptr + dot_index + HEADER_LENGTH + 1);
                         printf("test:(%d,%d)\n", f, s);
-                        pair<int, int> temp = {f, s};asd
+                        pair<int, int> temp = {f, s};
                         if(find(user_map[i]->message_index.begin(), user_map[i]->message_index.end(), temp)!=user_map[i]->message_index.end())
                             user_map[i]->message_index.erase(find(user_map[i]->message_index.begin(), user_map[i]->message_index.end(), temp));
-                        printf("----size:%d---\n",user_map[i]->message_index.size());
+                        // printf("----size:%d---\n",user_map[i]->message_index.size());
                     }
                     buff_ptr = newbuff; 
                 }

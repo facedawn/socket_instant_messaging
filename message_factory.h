@@ -9,7 +9,7 @@ class Message_factory{
 public:
     map<pair<int,int>,string*> message_storehouse;//TODO: link sql
     int nowround=0;
-    int nownum=0;
+    long long nownum=0;
     int mod=1e9+7;
     char buff[2048];
 

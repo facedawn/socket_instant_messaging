@@ -41,7 +41,7 @@ public:
 
             
             memset(addbuff, 0, sizeof(addbuff));
-            addbuff[0] = split_header;
+            addbuff[0] = index_header;
             set_message_header(addbuff + 1, send_type::message_index);
             string adds = "(" + to_string(i.first) + "," + to_string(i.second) + ")";
 
@@ -50,7 +50,7 @@ public:
             int end_index=adds.size()+PREFIX+strlen(buff);
             append(buff, addbuff);
             buff[end_index]=0;
-            // printf("---------\n%s\n%s........!!!!!!!!!!!!!!!\n",addbuff,buff);///
+            printf("send:%s\n",buff);///
             send(client->fd, buff, strlen(buff), MSG_NOSIGNAL);
         }
     }

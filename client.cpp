@@ -1,10 +1,13 @@
 #include "client.h"
-
+#include "client_message_index.h"
 int client_socketfd;
 char buff[BUFFSIZE];
 char sendbuff[BUFFSIZE];
 char heartbeatbuff[BUFFSIZE];
 char back_buff[BUFFSIZE];
+
+Client_message_index client_message_index;
+
 int socket_create()
 {
     int socketfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -159,7 +162,19 @@ int main()
                 send_type stype = get_message_header(buff_ptr);
                 // printf("%s %d\n",buff_ptr,stype);
                 if (stype == message)
-                    printf("Recv: %s\n", buff_ptr + HEADER_LENGTH);
+                {
+                    pair<int,int>nowindex=client_message_index.get_message_index(buff_ptr);
+                    
+                    if(client_message_index.get(nowindex)==std::time(nullptr)%1000000007)
+                    {
+                        continue;
+                    }
+                    if(!client_message_index.has(nowindex))
+                        printf("Recv: %s\n", buff_ptr + HEADER_LENGTH);
+
+                    client_message_index.send_back(client_socketfd,buff_ptr);
+                    client_message_index.insert(nowindex);
+                }
                 else if (stype == heartbeat)
                 {
                     heartbeat_left_time = MAX_LOSE_HEARTBEAT_TIME;

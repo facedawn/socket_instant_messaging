@@ -29,6 +29,7 @@ using namespace std;
 #define HEADER_LENGTH 3
 const char split_header = '|';
 const char split_ender = '#';
+const char index_header='&';
 
 enum send_type
 {
@@ -117,10 +118,12 @@ char *split(char *buff)
 
 int char2int(char* begin)
 {
+
     int ans=0;
     for(int i=0;*(begin+i)!=0;i++)
     {
         ans=ans*10+(*(begin+i))-'0';
     }
+    // printf("%s:%d\n",begin,ans);
     return ans;
 }
