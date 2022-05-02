@@ -1,6 +1,7 @@
 #include "common.h"
 #include "handler.h"
-class Selector
+#include "keeper.h"
+class Selector : public Keeper
 {
 private:
     fd_set readfds, readfds_back;
@@ -17,10 +18,6 @@ public:
     {
         FD_SET(fd, &readfds_back);
     }
-    void delete_connect(int fd)
-    {
-        FD_CLR(fd, &readfds_back);
-    }
     void select_fds()
     {
         readfds = readfds_back;
@@ -34,5 +31,10 @@ public:
     bool ready_on(int fd)
     {
         return FD_ISSET(fd, &readfds);
+    }
+
+    virtual void delete_connect(int fd)
+    {
+        FD_CLR(fd, &readfds_back);
     }
 };

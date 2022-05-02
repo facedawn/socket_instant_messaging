@@ -17,9 +17,6 @@ void Socket::recive(int fd)
 {
     memset(message->buff, 0, BUFFSIZE);
     recv(fd, message->buff, BUFFSIZE - 1, 0);
-    
-    if (strlen(message->buff) > 3)
-        printf("%s...\n", message->buff);
 }
 
 void Socket::send_message(int fd, char *buff)

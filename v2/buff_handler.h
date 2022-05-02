@@ -5,7 +5,7 @@
 class Buff_handler : public Handler
 {
 private:
-    std::vector<Handler> handler_list;
+    std::vector<Handler *> handler_list;
     //返回下一条信息起点
     char *split_message(char *buff)
     {
@@ -25,27 +25,29 @@ private:
     }
 
 public:
-    Buff_handler(){}
-    ~Buff_handler(){}
-    virtual void handle(Message &message);
-    
-    void append_handler(Handler handler)
+    Buff_handler() {}
+    ~Buff_handler() {}
+    virtual void handle(Message &message, Message::send_type type, int fd);
+
+    void append_handler(Handler *handler)
     {
         handler_list.push_back(handler);
     }
 };
 
-void Buff_handler::handle(Message &message)
+void Buff_handler::handle(Message &message, Message::send_type type, int fd)
 {
     char *buff = message.buff;
-    while (buff != NULL)
+    while (true)
     {
-        char *nextbuff = split_message(buff);
+        buff = split_message(buff);
+        if(buff==NULL)break;
+        Message temp(buff);
+        type = temp.get_message_header();
+
         for (auto i : handler_list)
         {
-            Message temp(buff);
-            i.handle(temp);
+            i->handle(temp, type, fd);
         }
-        buff = nextbuff;
     }
 }

@@ -8,7 +8,7 @@ public:
     const static char split_header = '|';
     const static char split_ender = '#';
     const static char index_header = '&';
-    const static int PREFIX=4;
+    const static int PREFIX = 4;
     // std::shared_ptr<char> sptr = std::make_shared<char>(200);
 
     char *buff;
@@ -37,7 +37,8 @@ public:
     }
     enum send_type
     {
-        message = 0,
+        unknow = 0,
+        message = 1,
         heartbeat = 100,
         message_index = 101,
         message_back = 102,
@@ -45,7 +46,7 @@ public:
         set_username = 201,
     };
 
-    send_type get_message_header(char *buff)
+    send_type get_message_header()
     {
         // printf("%s\n-------------\n",buff);
         int now = 0;
@@ -79,7 +80,7 @@ public:
         set_split_header();
         if (header == message)
         {
-            append("000");
+            append("001");
         }
         else if (header == heartbeat)
         {
@@ -104,5 +105,22 @@ public:
         clear();
         set_message_header(type);
         append(buff);
+    }
+
+    std::vector<int> spilt_string2int(char ch)
+    {
+        std::vector<int> ans;
+        int now = 0;
+        int i = Message::PREFIX-1;
+        while (buff[i] != 0)
+        {
+            for (i = Message::PREFIX-1; buff[i] != 0 && buff[i] != ch; i++)
+            {
+                now = now * 10 + buff[i] - '0';
+            }
+            ans.push_back(now);
+            now = 0;
+        }
+        return ans;
     }
 };

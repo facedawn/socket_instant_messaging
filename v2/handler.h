@@ -7,5 +7,5 @@ private:
 public:
     Handler(){}
     ~Handler(){}
-    virtual void handle(Message &message){}
+    virtual void handle(Message &message, Message::send_type type,int fd){printf("handler\n");}
 };

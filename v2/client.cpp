@@ -1,35 +1,39 @@
 #include "client_socket.h"
 #include "buff_handler.h"
 #include "message_handler.h"
+#include "heartbeat_handler.h"
 #include "sender.h"
 
-const char *ip="127.0.0.1";
-static const int port=1234;
+static const char *ip = "127.0.0.1";
+static const int port = 1234;
+static int client_socketfd;
 
 void stopServerRunning(int p)
 {
     printf("Close\n");
-    
+    close(client_socketfd);
     exit(0);
 }
 char b[2048];
 int main()
 {
     Client_socket client_socket;
-    client_socket.init_socket_create(port,ip);
+    client_socketfd = client_socket.init_socket_create(port, ip);
 
     Buff_handler buff_handler;
-    Message_handler message_handler;
+    Handler* message_handler=new Message_handler();
+    Handler* heartbeat_handler=new Heartbeat_handler();
     buff_handler.append_handler(message_handler);
+    buff_handler.append_handler(heartbeat_handler);
 
     Sender sender(client_socket.fd);
-    sender.start();
-    sender.stop();
-    while(true)
+    sender.start_heartbeat();
+    sender.start_send();
+    while (true)
     {
+        signal(SIGINT, stopServerRunning); // 这句用于在输入Ctrl+C的时候关闭服务器
         client_socket.recive(client_socket.fd);
-        printf("%s...\n",client_socket.message->buff);
-        buff_handler.handle(*(client_socket.message));
+        buff_handler.handle(*(client_socket.message),Message::unknow,client_socketfd);
         // break;
     }
 }
