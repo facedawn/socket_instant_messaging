@@ -1,6 +1,6 @@
 #include "client_socket.h"
 #include "buff_handler.h"
-#include "message_handler.h"
+#include "message_handler_client.h"
 #include "heartbeat_handler.h"
 #include "sender.h"
 
@@ -21,9 +21,9 @@ int main()
     client_socketfd = client_socket.init_socket_create(port, ip);
 
     Buff_handler buff_handler;
-    Handler* message_handler=new Message_handler();
+    Handler* message_handler_client=new Message_handler_client();
     Handler* heartbeat_handler=new Heartbeat_handler();
-    buff_handler.append_handler(message_handler);
+    buff_handler.append_handler(message_handler_client);
     buff_handler.append_handler(heartbeat_handler);
 
     Sender sender(client_socket.fd);
@@ -33,6 +33,7 @@ int main()
     {
         signal(SIGINT, stopServerRunning); // 这句用于在输入Ctrl+C的时候关闭服务器
         client_socket.recive(client_socket.fd);
+        //printf("%s\n",client_socket.message->buff);
         buff_handler.handle(*(client_socket.message),Message::unknow,client_socketfd);
         // break;
     }

@@ -18,11 +18,25 @@ public:
         buff = new char[2048];
         has_memory = true;
     }
-    Message(char *buff)
+    Message(char *buff, int flag = 0)//默认浅拷贝
     {
-        this->buff = buff;
-        has_memory = false;
+        if (flag == 0)
+        {
+            this->buff = buff;
+            has_memory = false;
+        }
+        else
+        {
+            int len = strlen(buff);
+            this->buff = new char[len];
+            for (int i = 0; i < len; i++)
+            {
+                this->buff[i] = buff[i];
+            }
+            has_memory = true;
+        }
     }
+
     virtual ~Message()
     {
         if (has_memory)
@@ -111,10 +125,10 @@ public:
     {
         std::vector<int> ans;
         int now = 0;
-        int i = Message::PREFIX-1;
+        int i = Message::PREFIX - 1;
         while (buff[i] != 0)
         {
-            for (i = Message::PREFIX-1; buff[i] != 0 && buff[i] != ch; i++)
+            for (i = Message::PREFIX - 1; buff[i] != 0 && buff[i] != ch; i++)
             {
                 now = now * 10 + buff[i] - '0';
             }

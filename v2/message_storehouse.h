@@ -19,7 +19,7 @@ public:
     void remove(int index);
 
 private:
-    Message_storehouse(int maxsize=10000)
+    Message_storehouse(int maxsize = 10000)
     {
         nownum = 0;
         round = 0;
@@ -28,7 +28,7 @@ private:
         has_recived = new std::unordered_map<int, int>(maxsize);
     };
 };
-Message_storehouse *Message_storehouse::message_storehouse=nullptr;
+Message_storehouse *Message_storehouse::message_storehouse = nullptr;
 
 Message_storehouse *Message_storehouse::get_message_storehouse()
 {
@@ -44,19 +44,26 @@ int Message_storehouse::store(Message *message)
     if (round > 0)
     {
         delete message_index->at(nownum);
+        (*message_index)[nownum]=message;
+        (*has_recived)[nownum]=0;
     }
-    message_index->insert({nownum, message});
-    has_recived[nownum] = 0;
+    else
+    {
+        message_index->insert({nownum, message});
+        has_recived->insert({nownum, 0});
+    }
+
+    ++nownum;
+
     if (nownum >= maxsize)
     {
         nownum -= maxsize;
         ++round;
     } //要不要留备份接口呢emmm
-
     return (nownum + maxsize - 1) % maxsize;
 }
 
 void Message_storehouse::remove(int index)
 {
-    has_recived.erase(index);
+    has_recived->erase(index);
 }

@@ -44,7 +44,7 @@ void Buff_handler::handle(Message &message, Message::send_type type, int fd)
         if(buff==NULL)break;
         Message temp(buff);
         type = temp.get_message_header();
-
+        
         for (auto i : handler_list)
         {
             i->handle(temp, type, fd);

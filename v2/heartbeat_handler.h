@@ -16,6 +16,7 @@ public:
     virtual void new_connect(int fd);
     virtual void handle(Message &message, Message::send_type type,int fd);
     void append_keeper(Keeper* keeper){keeper_list.push_back(keeper);}
+    void all_new_connect(int fd);
 };
 
 Heartbeat_handler::Heartbeat_handler()
@@ -60,4 +61,12 @@ void Heartbeat_handler::handle(Message &message, Message::send_type type,int fd)
         return;
     // printf("recive heartbeat from %d\n",fd);
     heartbeat_cnt[fd] = MAX_HEARTBEAT_CNT;
+}
+
+void Heartbeat_handler::all_new_connect(int fd)
+{
+    for(auto i:keeper_list)
+    {
+        i->new_connect(fd);
+    }
 }
