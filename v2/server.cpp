@@ -4,6 +4,7 @@
 #include "message.h"
 #include "message_handler.h"
 #include "heartbeat_handler.h"
+#include "server_message_back_handler.h"
 #include "sender.h"
 
 static int server_socketfd;
@@ -24,9 +25,11 @@ int main()
     Handler* buff_handler=new Buff_handler();
     Handler* message_handler=new Message_handler();
     Handler* heartbeat_handler=new Heartbeat_handler();
+    Handler* server_message_back_handler=new Server_message_back_handler();
 
     ((Buff_handler*)buff_handler)->append_handler(message_handler);
     ((Buff_handler*)buff_handler)->append_handler(heartbeat_handler);
+    ((Buff_handler*)buff_handler)->append_handler(server_message_back_handler);
 
     Sender* sender=new Sender(server_socketfd);
 

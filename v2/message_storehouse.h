@@ -41,11 +41,21 @@ Message_storehouse *Message_storehouse::get_message_storehouse()
 
 int Message_storehouse::store(Message *message)
 {
+    if (nownum >= maxsize)
+    {
+        nownum -= maxsize;
+        ++round;
+    }
+
+    //存储时添加index，方便client_message_back
+    message->set_message_header(Message::server_message_back);
+    message->append(std::to_string(nownum).c_str());
+
     if (round > 0)
     {
         delete message_index->at(nownum);
-        (*message_index)[nownum]=message;
-        (*has_recived)[nownum]=0;
+        (*message_index)[nownum] = message;
+        (*has_recived)[nownum] = 0;
     }
     else
     {
@@ -53,14 +63,8 @@ int Message_storehouse::store(Message *message)
         has_recived->insert({nownum, 0});
     }
 
-    ++nownum;
-
-    if (nownum >= maxsize)
-    {
-        nownum -= maxsize;
-        ++round;
-    } //要不要留备份接口呢emmm
-    return (nownum + maxsize - 1) % maxsize;
+    //要不要留备份接口呢emmm
+    return (nownum++);
 }
 
 void Message_storehouse::remove(int index)

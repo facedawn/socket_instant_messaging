@@ -18,7 +18,7 @@ public:
         buff = new char[2048];
         has_memory = true;
     }
-    Message(char *buff, int flag = 0)//默认浅拷贝
+    Message(char *buff, int flag = 0) //默认浅拷贝
     {
         if (flag == 0)
         {
@@ -28,7 +28,7 @@ public:
         else
         {
             int len = strlen(buff);
-            this->buff = new char[len];
+            this->buff = new char[len + 10];
             for (int i = 0; i < len; i++)
             {
                 this->buff[i] = buff[i];
@@ -55,7 +55,8 @@ public:
         message = 1,
         heartbeat = 100,
         message_index = 101,
-        message_back = 102,
+        server_message_back = 102,
+        client_message_back = 103,
         set_channal = 200,
         set_username = 201,
     };
@@ -81,13 +82,18 @@ public:
             buff[i] = str[i - initlen];
         }
     }
+    void append(char ch)
+    {
+        int initlen = strlen(buff);
+        buff[initlen] = ch;
+    }
     void clear()
     {
         memset(buff, 0, sizeof(buff));
     }
     void set_split_header()
     {
-        buff[0] = split_header;
+        append(split_header);
     }
     void set_message_header(send_type header)
     {
@@ -104,9 +110,13 @@ public:
         {
             append("101");
         }
-        else if (header == message_back)
+        else if (header == server_message_back)
         {
             append("102");
+        }
+        else if (header == client_message_back)
+        {
+            append("103");
         }
         else if (header == set_username)
         {

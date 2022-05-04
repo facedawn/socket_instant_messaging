@@ -2,6 +2,7 @@
 #include "buff_handler.h"
 #include "message_handler_client.h"
 #include "heartbeat_handler.h"
+#include "client_message_back_handler.h"
 #include "sender.h"
 
 static const char *ip = "127.0.0.1";
@@ -23,8 +24,10 @@ int main()
     Buff_handler buff_handler;
     Handler* message_handler_client=new Message_handler_client();
     Handler* heartbeat_handler=new Heartbeat_handler();
+    Handler* client_message_back_handler=new Client_message_back_handler();
     buff_handler.append_handler(message_handler_client);
     buff_handler.append_handler(heartbeat_handler);
+    buff_handler.append_handler(client_message_back_handler);
 
     Sender sender(client_socket.fd);
     sender.start_heartbeat();
@@ -33,7 +36,7 @@ int main()
     {
         signal(SIGINT, stopServerRunning); // 这句用于在输入Ctrl+C的时候关闭服务器
         client_socket.recive(client_socket.fd);
-        //printf("%s\n",client_socket.message->buff);
+        // printf("%s\n",client_socket.message->buff);
         buff_handler.handle(*(client_socket.message),Message::unknow,client_socketfd);
         // break;
     }

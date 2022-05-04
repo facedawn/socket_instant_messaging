@@ -26,6 +26,7 @@ public:
     void send_message_storehouse();
     void start_send();
     void start_heartbeat();
+    static void mysend(int fd,char*buff);
 };
 Sender::Sender(int client_socketfd)
 {
@@ -39,6 +40,7 @@ Sender::Sender(int client_socketfd)
 void Sender::delete_connect(int fd)
 {
     this->connections.erase(fd);
+    connections_iter=connections.begin();
 }
 void Sender::new_connect(int fd)
 {
@@ -64,6 +66,7 @@ void Sender::send_message_storehouse() //这个函数是服务器使用
             last_iter = temp_recived_map->begin();
         }
 
+        if(connections.empty()){continue;}
         if (connections_iter == connections.end())
             connections_iter = connections.begin();
         auto tempfd = (*connections_iter);
@@ -73,12 +76,8 @@ void Sender::send_message_storehouse() //这个函数是服务器使用
         long long nowtime = time(NULL);
         if (i.second != nowtime && i.second != -1)
         {
-            // printf("send (%d/%d):%s ... to %d  state:%d  nowtime:%d\n", i.first, temp_recived_map->size(), (*temp_index_map)[i.first]->buff, tempfd,i.second,nowtime);
-            // printf("(%d)(%d)   (%d)(%d)\n",temp_recived_map,Message_storehouse::get_message_storehouse()->has_recived,temp_index_map,Message_storehouse::get_message_storehouse()->message_index);
-            send(tempfd, (*temp_index_map)[i.first]->buff, strlen((*temp_index_map)[i.first]->buff), 0);
-
+            Sender::mysend(tempfd,(*temp_index_map)[i.first]->buff);
             (*temp_recived_map)[i.first] = nowtime;
-            (*temp_recived_map)[i.first] = -1; //这个要丢到messageback
         }
     }
 }
@@ -114,4 +113,8 @@ void Sender::start_heartbeat()
     };
     std::thread heartbeat(heartbeat_thread);
     heartbeat.detach();
+}
+
+void Sender::mysend(int fd,char*buff){
+    send(fd,buff,strlen(buff),MSG_NOSIGNAL);
 }

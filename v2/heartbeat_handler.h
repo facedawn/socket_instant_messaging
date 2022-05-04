@@ -3,19 +3,19 @@
 #include "handler.h"
 #include "keeper.h"
 
-class Heartbeat_handler : public Handler,Keeper
+class Heartbeat_handler : public Handler, Keeper
 {
 private:
     const static int MAX_HEARTBEAT_CNT = 5;
     std::unordered_map<int, int> heartbeat_cnt;
-    std::vector<Keeper*> keeper_list;
+    std::vector<Keeper *> keeper_list;
 
 public:
     Heartbeat_handler();
     virtual void delete_connect(int fd);
     virtual void new_connect(int fd);
-    virtual void handle(Message &message, Message::send_type type,int fd);
-    void append_keeper(Keeper* keeper){keeper_list.push_back(keeper);}
+    virtual void handle(Message &message, Message::send_type type, int fd);
+    void append_keeper(Keeper *keeper) { keeper_list.push_back(keeper); }
     void all_new_connect(int fd);
 };
 
@@ -31,9 +31,11 @@ Heartbeat_handler::Heartbeat_handler()
                 heartbeat_cnt[i.first] = (--i.second);
                 if (i.second < 0)
                 {
-                    printf("close:%d\n",i.first);
+                    printf("close:%d\n", i.first);
+
                     heartbeat_cnt.erase(i.first);
-                    for(auto keeper:keeper_list){
+                    for (auto keeper : keeper_list)
+                    {
                         keeper->delete_connect(i.first);
                     }
                     close(i.first);
@@ -47,7 +49,7 @@ Heartbeat_handler::Heartbeat_handler()
 
 void Heartbeat_handler::new_connect(int fd)
 {
-    heartbeat_cnt[fd]=MAX_HEARTBEAT_CNT;
+    heartbeat_cnt[fd] = MAX_HEARTBEAT_CNT;
 }
 
 void Heartbeat_handler::delete_connect(int fd)
@@ -55,7 +57,7 @@ void Heartbeat_handler::delete_connect(int fd)
     heartbeat_cnt.erase(fd);
 }
 
-void Heartbeat_handler::handle(Message &message, Message::send_type type,int fd)
+void Heartbeat_handler::handle(Message &message, Message::send_type type, int fd)
 {
     if (type != Message::heartbeat)
         return;
@@ -65,7 +67,7 @@ void Heartbeat_handler::handle(Message &message, Message::send_type type,int fd)
 
 void Heartbeat_handler::all_new_connect(int fd)
 {
-    for(auto i:keeper_list)
+    for (auto i : keeper_list)
     {
         i->new_connect(fd);
     }
