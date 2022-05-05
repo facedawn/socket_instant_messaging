@@ -4,6 +4,8 @@
 class Keeper
 {
 public:
+    Keeper(){}
+    ~Keeper(){}
     virtual void delete_connect(int fd)
     {
         printf("delete!\n");

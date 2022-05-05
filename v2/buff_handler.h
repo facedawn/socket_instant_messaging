@@ -9,6 +9,8 @@ private:
     //返回下一条信息起点
     char *split_message(char *buff)
     {
+        if(buff==NULL)return NULL;
+        
         int i = 0;
         while (buff[i] != 0 && buff[i] != Message::split_header)
         {
@@ -38,9 +40,11 @@ public:
 void Buff_handler::handle(Message &message, Message::send_type type, int fd)
 {
     char *buff = message.buff;
+    char *newbuff;
+    buff=split_message(buff);
     while (true)
     {
-        buff = split_message(buff);
+        newbuff = split_message(buff);
         if(buff==NULL)break;
         Message temp(buff);
         type = temp.get_message_header();
@@ -49,5 +53,6 @@ void Buff_handler::handle(Message &message, Message::send_type type, int fd)
         {
             i->handle(temp, type, fd);
         }
+        buff=newbuff;
     }
 }

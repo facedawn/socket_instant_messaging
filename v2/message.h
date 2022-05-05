@@ -57,8 +57,12 @@ public:
         message_index = 101,
         server_message_back = 102,
         client_message_back = 103,
+        address = 104,
         set_channal = 200,
         set_username = 201,
+        set_address = 202,
+        set_group=203,
+        get_address=302
     };
 
     send_type get_message_header()
@@ -118,9 +122,25 @@ public:
         {
             append("103");
         }
+        else if(header==address)
+        {
+            append("104");
+        }
         else if (header == set_username)
         {
             append("201");
+        }
+        else if(header==set_address)
+        {
+            append("202");
+        }
+        else if(header==set_group)
+        {
+            append("203");
+        }
+        else if(header==get_address)
+        {
+            append("302");
         }
     }
 
@@ -146,5 +166,16 @@ public:
             now = 0;
         }
         return ans;
+    }
+
+    void replace_header(send_type type,int startpos)//不能替换成message
+    {
+        const char *header=std::to_string(type).c_str();
+        int len=strlen(header);
+        int cnt=0;
+        for(int i=startpos;i<startpos+len;i++,cnt++)
+        {
+            buff[i]=header[cnt];
+        }
     }
 };

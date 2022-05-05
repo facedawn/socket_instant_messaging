@@ -1,9 +1,8 @@
 #pragma once
 #include "common.h"
 #include "message.h"
-#include "storehouse.h"
 
-class Message_storehouse : public Storehouse
+class Message_storehouse
 {
 
 public:

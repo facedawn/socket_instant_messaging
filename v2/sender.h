@@ -7,9 +7,10 @@
 // emm是不是该写成单例
 class Sender : public Keeper
 {
+private:
     Message *send_message_to_server;
-    Message *send_message_to_client;
     Message *heartbeat_message;
+    static Message *send_buff;
     int client_socketfd;
 
     std::unordered_set<int> connections;
@@ -26,12 +27,13 @@ public:
     void send_message_storehouse();
     void start_send();
     void start_heartbeat();
-    static void mysend(int fd,char*buff);
+    static void mysend(int fd, char *buff);
+    static void set_header_send(int fd, Message::send_type type, char *buff);
 };
+Message *Sender::send_buff = new Message();
 Sender::Sender(int client_socketfd)
 {
     send_message_to_server = new Message();
-    send_message_to_client = new Message();
     heartbeat_message = new Message();
     this->client_socketfd = client_socketfd;
     connections_iter = connections.begin();
@@ -40,7 +42,7 @@ Sender::Sender(int client_socketfd)
 void Sender::delete_connect(int fd)
 {
     this->connections.erase(fd);
-    connections_iter=connections.begin();
+    connections_iter = connections.begin();
 }
 void Sender::new_connect(int fd)
 {
@@ -66,7 +68,10 @@ void Sender::send_message_storehouse() //这个函数是服务器使用
             last_iter = temp_recived_map->begin();
         }
 
-        if(connections.empty()){continue;}
+        if (connections.empty())
+        {
+            continue;
+        }
         if (connections_iter == connections.end())
             connections_iter = connections.begin();
         auto tempfd = (*connections_iter);
@@ -76,7 +81,7 @@ void Sender::send_message_storehouse() //这个函数是服务器使用
         long long nowtime = time(NULL);
         if (i.second != nowtime && i.second != -1)
         {
-            Sender::mysend(tempfd,(*temp_index_map)[i.first]->buff);
+            Sender::mysend(tempfd, (*temp_index_map)[i.first]->buff);
             (*temp_recived_map)[i.first] = nowtime;
         }
     }
@@ -115,6 +120,15 @@ void Sender::start_heartbeat()
     heartbeat.detach();
 }
 
-void Sender::mysend(int fd,char*buff){
-    send(fd,buff,strlen(buff),MSG_NOSIGNAL);
+void Sender::mysend(int fd, char *buff)
+{
+    send(fd, buff, strlen(buff), MSG_NOSIGNAL);
+}
+
+void Sender::set_header_send(int fd, Message::send_type type, char *buff)
+{
+    send_buff->clear();
+    send_buff->set_message_header(type);
+    send_buff->append(buff);
+    mysend(fd, send_buff->buff);
 }
