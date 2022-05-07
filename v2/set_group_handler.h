@@ -17,5 +17,6 @@ void Set_group_handler::handle(Message &message, Message::send_type type, int fd
         return;
     }
 
-    Group_storehouse::get_group_storehouse()->store(fd,new Message(message.buff-1,1));
+    // printf("set_group:%s\n",message.buff);
+    Group_storehouse::get_group_storehouse()->store(fd,new Message(message.buff,1));
 }

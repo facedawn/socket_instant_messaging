@@ -17,8 +17,9 @@ void Set_address_handler::handle(Message &message, Message::send_type type, int 
         return;
     }
     message.buff[-1] = Message::split_header;
-    Message *new_message = new Message(message.buff - 1);
-    message.replace_header(Message::address, 0);
+    Message *new_message = new Message(message.buff - 1,1);
+    new_message->replace_header(Message::address, 1);
 
+    // printf("set_address:%s\n",message.buff);
     Address_storehouse::get_address_storehouse()->store(fd, new_message);
 }

@@ -2,6 +2,7 @@
 #include "common.h"
 #include "handler.h"
 #include "keeper.h"
+#include "heartbeat_storehouse.h"
 
 class Heartbeat_handler : public Handler, Keeper
 {
@@ -26,14 +27,14 @@ Heartbeat_handler::Heartbeat_handler()
         while (true)
         {
             sleep(1);
-            for (auto i : heartbeat_cnt)
+            for (auto i : Heartbeat_storehouse::get_heartbeat_storehouse()->heartbeat_cnt)
             {
-                heartbeat_cnt[i.first] = (--i.second);
+                Heartbeat_storehouse::get_heartbeat_storehouse()->heartbeat_cnt[i.first]=(--i.second);
                 if (i.second < 0)
                 {
                     printf("close:%d\n", i.first);
 
-                    heartbeat_cnt.erase(i.first);
+                    Heartbeat_storehouse::get_heartbeat_storehouse()->heartbeat_cnt.erase(i.first);
                     for (auto keeper : keeper_list)
                     {
                         keeper->delete_connect(i.first);
@@ -49,12 +50,12 @@ Heartbeat_handler::Heartbeat_handler()
 
 void Heartbeat_handler::new_connect(int fd)
 {
-    heartbeat_cnt[fd] = MAX_HEARTBEAT_CNT;
+    Heartbeat_storehouse::get_heartbeat_storehouse()->heartbeat_cnt[fd] = MAX_HEARTBEAT_CNT;
 }
 
 void Heartbeat_handler::delete_connect(int fd)
 {
-    heartbeat_cnt.erase(fd);
+    Heartbeat_storehouse::get_heartbeat_storehouse()->heartbeat_cnt.erase(fd);
 }
 
 void Heartbeat_handler::handle(Message &message, Message::send_type type, int fd)
@@ -62,7 +63,7 @@ void Heartbeat_handler::handle(Message &message, Message::send_type type, int fd
     if (type != Message::heartbeat)
         return;
     // printf("recive heartbeat from %d\n",fd);
-    heartbeat_cnt[fd] = MAX_HEARTBEAT_CNT;
+    Heartbeat_storehouse::get_heartbeat_storehouse()->heartbeat_cnt[fd] = MAX_HEARTBEAT_CNT;
 }
 
 void Heartbeat_handler::all_new_connect(int fd)

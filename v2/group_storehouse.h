@@ -33,7 +33,7 @@ void Group_storehouse::store(int fd, Message *message)//带分隔符
 {
     delete fa[fd];
     fa[fd] = message;
-    std::string group_name(message->buff + Message::PREFIX);
+    std::string group_name(message->buff + Message::PREFIX-1);
     group[group_name].insert(fd);
 }
 void Group_storehouse::remove(int fd)

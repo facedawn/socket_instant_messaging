@@ -27,6 +27,7 @@ public:
     void send_message_storehouse();
     void start_send();
     void start_heartbeat();
+    void start_heartbeat(char *buff);
     static void mysend(int fd, char *buff);
     static void set_header_send(int fd, Message::send_type type, char *buff);
 };
@@ -102,6 +103,21 @@ void Sender::start_send() //这个函数是客户端发送到服务器使用
     };
     std::thread input(send_thread);
     input.detach();
+}
+
+void Sender::start_heartbeat(char *buff)
+{
+    auto heartbeat_thread = [=]()
+    {
+    // printf("%s\n",buff);
+        while (true)
+        {
+            sleep(1);
+            send(client_socketfd, buff, strlen(buff), 0);
+        }
+    };
+    std::thread heartbeat(heartbeat_thread);
+    heartbeat.detach();
 }
 
 void Sender::start_heartbeat()

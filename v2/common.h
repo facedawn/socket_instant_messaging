@@ -23,6 +23,28 @@
 #include <stdio.h>
 #include <atomic>
 #include <unordered_set>
+
+class Configure
+{
+public:
+    static const char* namesrv_ip;
+    static int namesrv_port;
+
+    static const char* server_ip;
+    static int server_port;
+
+    static const char *group;
+    static const char *ip;
+    static int port;
+};
+const char* Configure::namesrv_ip="127.0.0.1";
+int Configure::namesrv_port=12345;
+const char* Configure::server_ip="127.0.0.1";
+int Configure::server_port=1234;
+const char* Configure::group="default";
+const char* Configure::ip="127.0.0.1";
+int Configure::port=1234;
+
 int char2int(char *buff)
 {
     int ans = 0;
@@ -37,18 +59,24 @@ int char2int(char *buff)
 std::pair<const char *, int> getaddress(int argc, char *argv[])
 {
     int opt;
-    const char *optstring = "i:p:";
+    const char *optstring = "i:p:g:";
     const char *ip = "127.0.0.1";
-    int port = 1234;
+    int port=1234;
     while ((opt = getopt(argc, argv, optstring)) != -1)
     {
         if (opt == 'p')
         {
-            port = char2int(optarg);
+            port=char2int(optarg);
+            Configure::port = port;
         }
-        if (opt == 'i')
+        else if (opt == 'i')
         {
-            ip = optarg;
+            ip=optarg;
+            Configure::ip = optarg;
+        }
+        else if (opt == 'g')
+        {
+            Configure::group = optarg;
         }
         // printf("opt=%c\n", opt);
         // printf("optarg=%s\n", optarg);

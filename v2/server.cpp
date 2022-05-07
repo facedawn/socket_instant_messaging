@@ -6,6 +6,7 @@
 #include "heartbeat_handler.h"
 #include "server_message_back_handler.h"
 #include "sender.h"
+#include "client_socket.h"
 
 static int server_socketfd;
 void stopServerRunning(int p)
@@ -25,7 +26,28 @@ int main(int argc, char *argv[])
     Server_socket server_socket;
     server_socketfd = server_socket.init_socket_create(port);
 
-    //TODO:send address to namesrv
+    //TODO:send_back
+
+    Client_socket client_socket;
+    int client_socketfd=client_socket.init_socket_create(Configure::namesrv_port,Configure::namesrv_ip);
+    Message *set_message=new Message();
+    set_message->set_message_header(Message::set_address);
+    set_message->append(ip);
+    set_message->append(',');
+    set_message->append(std::to_string(port).c_str());
+    set_message->append((char)0);
+    
+    set_message->set_message_header(Message::set_group);
+    set_message->append(Configure::group);
+    set_message->append((char)0);
+    
+    set_message->set_message_header(Message::heartbeat);
+
+    Sender namesrv_sender(client_socketfd);
+    namesrv_sender.start_heartbeat(set_message->buff);
+    printf("set_group:%s\n",set_message->buff);
+    //set_group
+
 
     Selector *selector = new Selector();
     selector->new_connect(server_socket.fd);

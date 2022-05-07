@@ -16,6 +16,7 @@ public:
     Message* get_address_by_fd(int fd);
     virtual void delete_connect(int fd);
     virtual void new_connect(int fd) {}
+    void show_all();
 };
 Address_storehouse *Address_storehouse::address_storehouse = NULL;
 Address_storehouse *Address_storehouse::get_address_storehouse()
@@ -36,6 +37,8 @@ void Address_storehouse::store(int fd, Message *message)
 {
     delete address[fd];
     address[fd] = message;
+    // printf("store:%d:%s...\n",fd,address[fd]->buff);
+    // show_all();
 }
 void Address_storehouse::remove(int fd)
 {
@@ -44,5 +47,14 @@ void Address_storehouse::remove(int fd)
 }
 Message* Address_storehouse::get_address_by_fd(int fd)
 {
+    // std::cout<<address[fd]->buff<<"....12312313"<<std::endl;
     return address[fd];
+}
+
+void Address_storehouse::show_all()
+{
+    for(auto i:address)
+    {
+        printf("%d:%s\n",i.first,i.second->buff);
+    }
 }

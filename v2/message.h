@@ -178,4 +178,20 @@ public:
             buff[i]=header[cnt];
         }
     }
+
+    std::vector<char*>split(char ch)
+    {
+        std::vector<char*>ans;
+        ans.push_back(buff+PREFIX-1);
+        int len=strlen(buff);
+        for(int i=PREFIX;i<len;i++)
+        {
+            if(buff[i]==ch)
+            {
+                buff[i]=0;
+                ans.push_back(buff+i+1);
+            }
+        }
+        return ans;
+    }
 };

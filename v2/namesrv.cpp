@@ -22,9 +22,9 @@ void stopServerRunning(int p)
 
 int main(int argc, char *argv[])
 {
-    std::pair<const char*,int>address= getaddress(argc, argv);
-    const char *ip=address.first;
-    int port=address.second;
+    // std::pair<const char*,int>address= getaddress(argc, argv);
+    const char *ip=Configure::namesrv_ip;
+    int port=Configure::namesrv_port;
     printf("namesrv start...\nlistinging on %s:%d\n", ip,port);
 
     Server_socket server_socket;

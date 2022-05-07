@@ -42,6 +42,7 @@ private:
 
 public:
     int init_socket_create(int port, const char *ip);
+    void close_socket(int socketfd);
     int fd;
 };
 int Client_socket::init_socket_create(int port, const char *ip)
@@ -57,4 +58,8 @@ int Client_socket::init_socket_create(int port, const char *ip)
     }
     this->fd = client_socketfd;
     return client_socketfd;
+}
+
+void Client_socket::close_socket(int socketfd){
+    close(socketfd);
 }
