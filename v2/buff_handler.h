@@ -35,6 +35,10 @@ public:
     {
         handler_list.push_back(handler);
     }
+    void clear_handler()
+    {
+        handler_list.clear();
+    }
 };
 
 void Buff_handler::handle(Message &message, Message::send_type type, int fd)

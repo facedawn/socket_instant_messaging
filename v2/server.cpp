@@ -85,6 +85,7 @@ int main(int argc, char *argv[])
                     continue;
                 }
                 printf("%d connect\n", new_client);
+                ((Heartbeat_handler*)heartbeat_handler)->new_connect(new_client);
                 ((Heartbeat_handler *)heartbeat_handler)->all_new_connect(new_client);
             }
             else

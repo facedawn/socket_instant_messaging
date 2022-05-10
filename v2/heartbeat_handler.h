@@ -30,6 +30,7 @@ Heartbeat_handler::Heartbeat_handler()
             for (auto i : Heartbeat_storehouse::get_heartbeat_storehouse()->heartbeat_cnt)
             {
                 Heartbeat_storehouse::get_heartbeat_storehouse()->heartbeat_cnt[i.first]=(--i.second);
+                // printf("%d:%d\n",i.first,i.second);
                 if (i.second < 0)
                 {
                     printf("close:%d\n", i.first);
@@ -50,6 +51,7 @@ Heartbeat_handler::Heartbeat_handler()
 
 void Heartbeat_handler::new_connect(int fd)
 {
+    printf("%d heartbeat connect\n",fd);
     Heartbeat_storehouse::get_heartbeat_storehouse()->heartbeat_cnt[fd] = MAX_HEARTBEAT_CNT;
 }
 

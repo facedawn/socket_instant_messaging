@@ -141,6 +141,11 @@ void Sender::mysend(int fd, char *buff)
     send(fd, buff, strlen(buff), MSG_NOSIGNAL);
 }
 
+// void Sender::mysend(char*buff)
+// {
+//     send(this->client_socketfd,buf,strlen(buff),MSG_NOSIGNAL);
+// }
+
 void Sender::set_header_send(int fd, Message::send_type type, char *buff)
 {
     send_buff->clear();

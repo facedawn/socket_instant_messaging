@@ -85,11 +85,13 @@ public:
         {
             buff[i] = str[i - initlen];
         }
+        buff[sumlen]=0;
     }
     void append(char ch)
     {
         int initlen = strlen(buff);
         buff[initlen] = ch;
+        buff[initlen+1]=0;
     }
     void clear()
     {

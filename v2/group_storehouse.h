@@ -8,6 +8,7 @@ class Group_storehouse : public Keeper
 private:
     std::unordered_map<int, Message *> fa;
     std::unordered_map<std::string, std::unordered_set<int>> group;
+    
     Group_storehouse() {}
     static Group_storehouse *group_storehouse;
 
