@@ -13,10 +13,11 @@ public:
 
     char *buff;
     bool has_memory;
-    Message()
+    Message(int size=2048)
     {
-        buff = new char[2048];
+        buff = new char[size];
         has_memory = true;
+        clear();
     }
     Message(char *buff, int flag = 0) //默认浅拷贝
     {
@@ -29,10 +30,12 @@ public:
         {
             int len = strlen(buff);
             this->buff = new char[len + 10];
+            clear();
             for (int i = 0; i < len; i++)
             {
                 this->buff[i] = buff[i];
             }
+            this->buff[len]=0;
             has_memory = true;
         }
     }

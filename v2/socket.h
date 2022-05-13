@@ -15,6 +15,7 @@ public:
 
 void Socket::recive(int fd)
 {
+    // printf("recive:\n");
     memset(message->buff, 0, BUFFSIZE);
     recv(fd, message->buff, BUFFSIZE - 1, 0);
 }

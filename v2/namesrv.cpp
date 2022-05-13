@@ -74,6 +74,7 @@ int main(int argc, char *argv[])
                     continue;
                 }
                 printf("%d connect\n", new_client);
+                Heartbeat_storehouse::get_heartbeat_storehouse()->heartbeat_cnt[new_client]=Heartbeat_handler::MAX_HEARTBEAT_CNT;
                 ((Heartbeat_handler *)heartbeat_handler)->all_new_connect(new_client);
             }
             else

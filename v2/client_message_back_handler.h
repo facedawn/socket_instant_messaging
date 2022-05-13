@@ -23,5 +23,6 @@ void Client_message_back_handler::handle(Message &message, Message::send_type ty
     temp_buff.append(message.buff+Message::PREFIX-1);
 
     // send(fd,temp_buff.buff,strlen(temp_buff.buff),MSG_NOSIGNAL);
+    // sleep(1);
     Sender::mysend(fd,temp_buff.buff);
 }

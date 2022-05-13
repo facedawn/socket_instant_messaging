@@ -13,27 +13,27 @@ public:
     std::unordered_map<int, Message *> *message_index;
     std::unordered_map<int, int> *has_recived;
 
-    static Message_storehouse *get_message_storehouse();
+    static Message_storehouse *get_message_storehouse(int maxsize);
     int store(Message *message);
     void remove(int index);
 
 private:
-    Message_storehouse(int maxsize = 10000)
+    Message_storehouse(int maxsize)
     {
         nownum = 0;
         round = 0;
         this->maxsize = maxsize;
-        message_index = new std::unordered_map<int, Message *>(maxsize);
-        has_recived = new std::unordered_map<int, int>(maxsize);
+        message_index = new std::unordered_map<int, Message *>(maxsize+10);
+        has_recived = new std::unordered_map<int, int>(maxsize+10);
     };
 };
 Message_storehouse *Message_storehouse::message_storehouse = nullptr;
 
-Message_storehouse *Message_storehouse::get_message_storehouse()
+Message_storehouse *Message_storehouse::get_message_storehouse(int maxsize=10000)
 {
     if (Message_storehouse::message_storehouse == nullptr)
     {
-        Message_storehouse::message_storehouse = new Message_storehouse();
+        Message_storehouse::message_storehouse = new Message_storehouse(maxsize);
     }
     return Message_storehouse::message_storehouse;
 }
@@ -45,8 +45,8 @@ int Message_storehouse::store(Message *message)
         nownum -= maxsize;
         ++round;
     }
-
     //存储时添加index，方便client_message_back
+    message->append(Message::split_header);
     message->set_message_header(Message::server_message_back);
     message->append(std::to_string(nownum).c_str());
 
@@ -58,10 +58,11 @@ int Message_storehouse::store(Message *message)
     }
     else
     {
-        message_index->insert({nownum, message});
-        has_recived->insert({nownum, 0});
+        (*message_index)[nownum] = message;
+        (*has_recived)[nownum] = 0;
     }
-
+    // printf("%d:\n",nownum);
+    // printf("%s...(1))\n",message->buff);
     //要不要留备份接口呢emmm
     return (nownum++);
 }

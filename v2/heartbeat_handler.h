@@ -7,11 +7,11 @@
 class Heartbeat_handler : public Handler, Keeper
 {
 private:
-    const static int MAX_HEARTBEAT_CNT = 5;
     std::unordered_map<int, int> heartbeat_cnt;
     std::vector<Keeper *> keeper_list;
 
 public:
+    const static int MAX_HEARTBEAT_CNT = 2;
     Heartbeat_handler();
     virtual void delete_connect(int fd);
     virtual void new_connect(int fd);
@@ -29,13 +29,14 @@ Heartbeat_handler::Heartbeat_handler()
             sleep(1);
             for (auto i : Heartbeat_storehouse::get_heartbeat_storehouse()->heartbeat_cnt)
             {
-                Heartbeat_storehouse::get_heartbeat_storehouse()->heartbeat_cnt[i.first]=(--i.second);
+                Heartbeat_storehouse::get_heartbeat_storehouse()->heartbeat_cnt[i.first] = (--i.second);
                 // printf("%d:%d\n",i.first,i.second);
                 if (i.second < 0)
                 {
                     printf("close:%d\n", i.first);
 
-                    Heartbeat_storehouse::get_heartbeat_storehouse()->heartbeat_cnt.erase(i.first);
+                    // Heartbeat_storehouse::get_heartbeat_storehouse()->heartbeat_cnt.erase(i.first);
+                    delete_connect(i.first);
                     for (auto keeper : keeper_list)
                     {
                         keeper->delete_connect(i.first);
@@ -51,12 +52,13 @@ Heartbeat_handler::Heartbeat_handler()
 
 void Heartbeat_handler::new_connect(int fd)
 {
-    printf("%d heartbeat connect\n",fd);
+    printf("%d heartbeat connect\n", fd);
     Heartbeat_storehouse::get_heartbeat_storehouse()->heartbeat_cnt[fd] = MAX_HEARTBEAT_CNT;
 }
 
 void Heartbeat_handler::delete_connect(int fd)
 {
+    printf("heartbeat.\n");
     Heartbeat_storehouse::get_heartbeat_storehouse()->heartbeat_cnt.erase(fd);
 }
 

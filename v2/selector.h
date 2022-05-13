@@ -35,6 +35,7 @@ public:
 
     virtual void delete_connect(int fd)
     {
+        printf("selector.\n");
         FD_CLR(fd, &readfds_back);
     }
 };

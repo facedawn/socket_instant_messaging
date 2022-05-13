@@ -42,6 +42,7 @@ Sender::Sender(int client_socketfd)
 
 void Sender::delete_connect(int fd)
 {
+    printf("sender.\n");
     this->connections.erase(fd);
     connections_iter = connections.begin();
 }
@@ -61,8 +62,9 @@ void Sender::send_message_storehouse() //这个函数是服务器使用
         //每次remove掉前一个，避免向后遍历时迭代器失效。
         if (last_iter != temp_recived_map->end() && (*last_iter).second == -1)
         {
+            auto newiter=last_iter;
             Message_storehouse::get_message_storehouse()->remove((*last_iter).first);
-            ++last_iter;
+            last_iter=newiter;
         }
         else
         {
@@ -80,7 +82,9 @@ void Sender::send_message_storehouse() //这个函数是服务器使用
             connections_iter = connections.begin();
 
         long long nowtime = time(NULL);
-        if (i.second != nowtime && i.second != -1)
+        if (
+            // i.second != nowtime && 
+            i.second != -1)
         {
             Sender::mysend(tempfd, (*temp_index_map)[i.first]->buff);
             (*temp_recived_map)[i.first] = nowtime;
